@@ -70,7 +70,7 @@ module.exports = {
       }
     }
 
-    user.post(userValues, eduValues, function (err, result) {
+    user.create(userValues, eduValues, function (err, result) {
       if ( err ) {
         console.error(err);
         res.status('400').send('There was an error with insertion');
@@ -111,7 +111,7 @@ module.exports = {
 
     locValues.push(req.params.userID);
 
-    user.put(locValues, function (err, result) {
+    user.update(locValues, function (err, result) {
       if ( err ) {
         console.error(err);
         res.status('400').send('Error with update');

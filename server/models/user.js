@@ -24,7 +24,7 @@ module.exports = {
     }
   },
   
-  post : function (userData, eduData, callback) {
+  create : function (userData, eduData, callback) {
     var qs1 = "INSERT INTO `user` (`userID`,`name`,`facebookID`,`email`,\
       `age`,`sex`,`profile_picture`,`employer`,`job_title`,`latitude`,`longitude`,`objectID`) \
       VALUES (0,?,?,?,?,?,?,?,?,?,?,?);";
@@ -37,18 +37,19 @@ module.exports = {
         con.release();
         callback(err);
       } else {
-        db.query(qs1, userData, function(err, results1) {
+        db.query(qs1, userData, function (err, result1) {
           if ( err ) {
             con.release();
             callback(err);
           } else {
-            eduData.unshift(results1.insertId);
-            db.query(qs2, eduData, function(err,results2) {
+            var userID = result1.insertId;
+            var eduValues = [userID].concat(eduData);
+            db.query(qs2, eduValues, function (err,result2) {
               con.release();
               if (err) {
                 callback(err);
               } else {
-                callback(null, results1, results2);
+                callback(null, result1, result2);
               }
             });
           }  
@@ -60,35 +61,39 @@ module.exports = {
   },
 
   delete : function (userID, callback) {
-    var qs1 = "delete from user_education where userID = ?;";
-    var qs2 = "delete from user where userID = ?;";
+    var qs1 = "delete from room_user where userID = ?;";
+    var qs2 = "delete from wandoo where userID = ?;";
+    var qs3 = "delete from user_education where userID = ?;";
+    var qs4 = "delete from user where userID = ?;";
     
-    // need to also delete all wandoos associated with a user
-      // though we can also wait for the wandoo to be cleaned up by the worker
-
-    db.getConnection(function (err, con) {
+    dbUtils.queryBuilder(qs1, [userID], function (err, result1) {
       if (err) {
         callback(err);
       } else {
-        db.query(qs1, userID, function (err, results1) {
-          if ( err ) {
+        dbUtils.queryBuilder(qs2, [userID], function (err, result2) {
+          if (err) {
             callback(err);
           } else {
-            db.query(qs2, userID, function (err, results2) {
-              if ( err ) {
+            dbUtils.queryBuilder(qs3, [userID], function (err, result3) {
+              if (err) {
                 callback(err);
               } else {
-                callback(null, results1, results2);
+                dbUtils.queryBuilder(qs4, [userID], function (err, result4) {
+                  if (err) {
+                    callback(err);
+                  } else {
+                    callback(null, result1, result2, result3, result4);
+                  }
+                });
               }
             });
           }
         });
       }
     });
-
   },
 
-  put : function (locationData, callback) {
+  update : function (locationData, callback) {
     var qs = "update user set latitude = ?, longitude = ? where userID = ?;";
 
     dbUtils.queryBuilder(qs, locationData, callback);

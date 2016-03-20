@@ -50,7 +50,9 @@ CREATE TABLE `user` (
   `latitude` DECIMAL(13,10) NULL DEFAULT NULL,
   `longitude` DECIMAL(13,10) NULL DEFAULT NULL,
   `objectID` VARCHAR(15) NULL DEFAULT NULL,
-  PRIMARY KEY (`userID`)
+  PRIMARY KEY (`userID`),
+  UNIQUE KEY (`facebookID`),
+  UNIQUE KEY (`objectID`)
 );
 
 -- ---
