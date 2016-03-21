@@ -15,6 +15,8 @@ Testing Strategy
 
 // we can store all of these values in a common file or data structure
 
+// when running the spec, why is time only listed for the 1st create test?
+
 var userData = [
   'Pete Zurish',
   '134515aa',
@@ -26,6 +28,34 @@ var userData = [
   'Software Engineer',
   37.7836675,
   -122.4091699,
+  'IPyQqWYM0x'
+];
+
+var userDataDupFBID = [
+  'George West',
+  '134515aa',
+  'G.W@gmail.com',
+  29,
+  'M',
+  'http://url-to-a-pic.png',
+  'Facebook',
+  'Software Engineer',
+  37.78366235,
+  -122.4091249,
+  'asdgasdg89'
+];
+
+var userDataDupObjectID = [
+  'Sam East',
+  '345sfag',
+  'S.E@gmail.com',
+  25,
+  'M',
+  'http://url-to-a-pic.png',
+  'Microsoft',
+  'Software Engineer',
+  37.783663455,
+  -122.443591249,
   'IPyQqWYM0x'
 ];
 
@@ -42,6 +72,7 @@ var userData2 = [
   -122.4094349,
   'kljGLKSGj8'
 ];
+
 
 var userReturnedValues = {
   name : 'Pete Zurish',
@@ -79,24 +110,27 @@ var roomData = [
   'asdgkjadfgadfg'
 ];
 
+var locationData = [24.23535, -120.23535];
+
+before(function (done) {
+  testUtil.dropDatabase(done);
+});
+
 describe('users', function () {
   
   describe('create', function () {
-    before(function (done) {
-      testUtil.dropDatabase(done);
-    });
     afterEach(function (done) {
       testUtil.dropDatabase(done);
     });
     it('should create a new user in the database', function (done) {
-      user.create(userData, eduData, function (err, results1, results2) {
+      user.create(userData, eduData, function (err, result, result2) {
         if (err) {
           console.error(err);
         } else {
-          var userID = results1.insertId;
+          var userID = result.insertId;
           user.getByUserID(userID, function (err, result) {
             if (err) {
-              console.error(err);
+              console.log(err);
             } else {
               expect(result[0]).to.deep.equal(_.extend(userReturnedValues, 
                 {'userID' : userID}));
@@ -108,32 +142,49 @@ describe('users', function () {
     // need to test invalid data types
     });
 
-    xit('should prevent users with duplicate facebookIDs \
-      from being created', function (done) {
-
+    it('should prevent users from being created with duplicate facebookIDs ' + 
+      'from being created', function (done) {
+      user.create(userData, eduData, function (err, result1, result2) {
+        if (err) {
+          console.error(err);
+        } else {
+          user.create(userDataDupFBID, eduData, function (err, result1, result2) {
+            expect(err.message).to.contain('facebookID');
+            done();
+          });
+        }
+      });
+      
     });
 
-    xit('should prevent users with duplicate objectIDs \
-      from being created', function (done) {
-      
+    it('should prevent users from being created with duplicate objectIDs ' + 
+      'from being created', function (done) {
+        userDataDupObjectID
+      user.create(userData, eduData, function (err, result1, result2) {
+        if (err) {
+          console.error(err);
+        } else {
+          user.create(userDataDupObjectID, eduData, function (err, result1, result2) {
+            expect(err.message).to.contain('objectID');
+            done();
+          });
+        }
+      });
     });
 
 
   });
 
   describe('getByUserID', function() {
-    before(function (done) {
-      testUtil.dropDatabase(done);
-    });
     afterEach(function (done) {
       testUtil.dropDatabase(done);
     });
     it('getByUserID should get a user\'s data by userID', function (done) {
-      user.create(userData, eduData, function (err, results1, results2) {
+      user.create(userData, eduData, function (err, result1, result2) {
         if (err) {
           console.error(err);
         } else {
-          var userID = results1.insertId;
+          var userID = result1.insertId;
           user.getByUserID(userID, function (err, result) {
             if (err) {
               console.error(err);
@@ -151,25 +202,22 @@ describe('users', function () {
   });
 
   describe('getByFBID', function () {
-    before(function (done) {
-      testUtil.dropDatabase(done);
-    });
     afterEach(function (done) {
       testUtil.dropDatabase(done);
     });
     it('should get a user\'s data by facebookID', function (done) {
-      user.create(userData, eduData, function (err, results1, results2) {
+      user.create(userData, eduData, function (err, result1, result2) {
         if (err) {
           console.error(err);
         } else {
           var fbID = userReturnedValues.facebookID;
-          var userID = results1.insertId;
+          var userID = result1.insertId;
           user.getByFBID(fbID, function (err, result) {
             if (err) {
               console.error(err);
             } else {
               expect(result).to.be.an('array');
-              expect(result.length).to.equal(1); // should we make objID and fbID unique? --> YES
+              expect(result.length).to.equal(1);
               expect(result[0]).to.deep.equal(_.extend(userReturnedValues, 
                 {'userID' : userID}));
               // what if fbID is undefined?
@@ -194,34 +242,31 @@ describe('users', function () {
     // check that the user no longer exists
       // checking for wandoo and room will be handled by the integration tests
     var userIDToDelete;
+    afterEach(function (done) {
+      testUtil.dropDatabase(done);
+    });
     before(function (done) {
-      testUtil.dropDatabase(function (err) {
+      user.create(userData, eduData, function (err, result1) {
         if (err) {
           console.error(err);
         } else {
-          user.create(userData, eduData, function (err, result1) {
+          userIDToDelete = result1.insertId;
+          user.create(userData2, eduData2, function (err, result2) {
             if (err) {
               console.error(err);
             } else {
-              userIDToDelete = result1.insertId;
-              user.create(userData2, eduData2, function (err, result2) {
+              var otherUserID = result2.insertId;
+              wandooData[0] = userIDToDelete;
+              wandoo.create(wandooData, function (err, result3) {
                 if (err) {
                   console.error(err);
                 } else {
-                  var otherUserID = result2.insertId;
-                  wandooData[0] = userIDToDelete;
-                  wandoo.create(wandooData, function (err, result3) {
+                  var wandooID = result3.insertId;
+                  room.create(roomData, [userIDToDelete, otherUserID], function (err, result4) {
                     if (err) {
                       console.error(err);
                     } else {
-                      var wandooID = result3.insertId;
-                      room.create(roomData, [userIDToDelete, otherUserID], function (err, result4) {
-                        if (err) {
-                          console.error(err);
-                        } else {
-                          done();
-                        }
-                      });
+                      done();
                     }
                   });
                 }
@@ -233,6 +278,7 @@ describe('users', function () {
     });
 
     it('should delete a user from all user tables', function (done) {
+
       user.delete(userIDToDelete, function (err, result1, result2, result3, result4) {
         if (err) {
           console.error(err);
@@ -252,8 +298,39 @@ describe('users', function () {
 
   });
 
-  xdescribe('update', function () {
-
+  describe('update', function () {
+    var userID;
+    afterEach(function (done) {
+      testUtil.dropDatabase(done);
+    });
+    before(function (done) {
+      user.create(userData, eduData, function (err, result) {
+        if (err) {
+          console.error(err);
+        } else {
+          userID = result.insertId;
+          done();
+        }
+      });
+    });
+    it('should update a user\'s location', function (done) {
+      user.update(locationData.concat(userID), function (err, result) {
+        if (err) {
+          console.error(err);
+        } else {
+          expect(result.affectedRows).to.equal(1);
+          user.getByUserID(userID, function (err, result) {
+            if (err) {
+              console.error(err);
+            } else {
+              expect(result[0].latitude).to.equal(locationData[0]);
+              expect(result[0].longitude).to.equal(locationData[1]);
+              done();
+            }
+          });
+        }
+      });
+    });
   });
 
 

@@ -51,9 +51,9 @@ module.exports = {
     var userValues = [],
       eduValues = [];
 
-    for ( var i in req.body ) {
-      if ( i in userAttr ) {
-        if ( i === 'profilePic' ) {
+    for (var i in req.body) {
+      if (i in userAttr) {
+        if (i === 'profilePic') {
           // TO TEST IMAGES ON DEV ENVIRONMENT
           // userValues[userAttr[i]] = config.serverURL + '/images/' + req.body['facebookID'] + '.png';
           // util.writeImage(userValues[userAttr[i]], req.body['profilePic']);
@@ -62,7 +62,7 @@ module.exports = {
         } else {
           userValues[userAttr[i]] = req.body[i];
         }
-      } else if ( i in eduAttr ) {
+      } else if (i in eduAttr) {
         eduValues[eduAttr[i]] = req.body[i];
       } else {
         res.status('400').send('Wrong parameters');
@@ -71,9 +71,9 @@ module.exports = {
     }
 
     user.create(userValues, eduValues, function (err, result) {
-      if ( err ) {
+      if (err) {
         console.error(err);
-        res.status('400').send('There was an error with insertion');
+        res.status('400').send(err.message);
       } else {
         res.send();
       }
@@ -82,7 +82,7 @@ module.exports = {
 
   delete : function (req, res) {
     user.delete(req.params.userID, function (err, result1, result2) {
-      if ( err ) {
+      if (err) {
         console.error(err);
         res.status('400').send('Error with deletion');
       } else {
@@ -100,8 +100,8 @@ module.exports = {
     };
 
     var locValues = [];
-    for ( var i in req.body ){
-      if ( i in locAttr ) {
+    for (var i in req.body){
+      if (i in locAttr) {
         locValues[locAttr[i]] = req.body[i];
       } else {
         res.send('Wrong parameters');
@@ -112,7 +112,7 @@ module.exports = {
     locValues.push(req.params.userID);
 
     user.update(locValues, function (err, result) {
-      if ( err ) {
+      if (err) {
         console.error(err);
         res.status('400').send('Error with update');
       } else {

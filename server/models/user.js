@@ -38,7 +38,7 @@ module.exports = {
         callback(err);
       } else {
         db.query(qs1, userData, function (err, result1) {
-          if ( err ) {
+          if (err) {
             con.release();
             callback(err);
           } else {
